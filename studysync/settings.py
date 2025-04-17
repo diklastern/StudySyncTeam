@@ -25,7 +25,13 @@ SECRET_KEY = 'django-insecure-%g@bcauc4-a47=1hf4cvcuhhru2huk^xu&j6(alkky0rwq65n(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    "studysyncteam.onrender.com",
+    ".onrender.com",  
+]
+
 
 
 # Application definition
@@ -36,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'users',
     'django.contrib.staticfiles',
 ]
 
@@ -98,6 +105,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTH_USER_MODEL = 'users.CustomUser'
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
