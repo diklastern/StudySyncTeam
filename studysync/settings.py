@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'users',
     'courses',
+    'availability',
     'django.contrib.staticfiles',
 ]
 
