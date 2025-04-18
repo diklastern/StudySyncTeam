@@ -1,38 +1,39 @@
 {% extends "base.html" %}
 {% load custom_tags %}
 {% block content %}
-<div class="p-6">
-  <h2 class="text-2xl font-bold mb-4 text-purple-800">Weekly Group Availability</h2>
+<div class="box">
+ <h2 class="title is-4 has-text-link mb-4">Weekly Group Availability</h2>
 
-  <!-- Week selection form: GET only -->
+  <!-- Week selection (GET) -->
   <form method="get" id="week-form">
-    <div class="mb-4 flex items-center gap-3">
-      <label for="week_start" class="font-medium text-gray-700">Select Week:</label>
+    <div class="field is-grouped is-align-items-center">
+      <label for="week_start" class="label mr-2">Select Week:</label>
       <input type="date" name="week_start" id="week_start"
-             class="border border-gray-300 rounded px-3 py-1"
+             class="input"
              value="{{ week_start|date:'Y-m-d' }}"
              onchange="document.getElementById('week-form').submit()" />
     </div>
   </form>
 
-  <!-- Availability saving form: POST -->
-  <form method="post" id="availability-form">
+  <!-- Save availability (POST) -->
+  <form method="post" id="availability-form" class="mt-4">
     {% csrf_token %}
     <input type="hidden" name="week_start" value="{{ week_start|date:'Y-m-d' }}">
-    <p class="text-gray-600 text-sm mb-2">
-      Week of 
-      <strong>{{ week_start|date:"M d" }}</strong> – 
+
+    <p class="has-text-grey mb-3">
+      Week of <strong>{{ week_start|date:"M d" }}</strong> – 
       <strong>{{ end_of_week|date:"M d" }}</strong>
     </p>
-    <div class="overflow-auto">
-      <table class="table-auto border-collapse w-full max-w-5xl text-sm text-center">
+
+    <div class="table-container">
+      <table class="table is-bordered is-fullwidth is-hoverable has-text-centered">
         <thead>
-          <tr class="bg-blue-100 text-gray-700">
-            <th class="border px-2 py-1">Hour</th>
+          <tr>
+            <th>Hour</th>
             {% for day, date in week_day_dates %}
-              <th class="border px-2 py-1 capitalize">
+              <th class="capitalize">
                 {{ day }}<br>
-                <span class="text-xs text-gray-500">{{ date|date:"d/m" }}</span>
+                <span class="has-text-grey is-size-7">{{ date|date:"d/m" }}</span>
               </th>
             {% endfor %}
           </tr>
@@ -40,10 +41,11 @@
         <tbody>
           {% for hour in 8|to:22 %}
             <tr>
-              <td class="border px-2 py-1 font-semibold text-gray-600">{{ hour|format_hour }}</td>
+              <td class="has-text-grey has-text-weight-semibold">{{ hour|format_hour }}</td>
               {% for day, date in week_day_dates %}
-                <td class="border px-2 py-1 bg-white hover:bg-blue-50 cursor-pointer"
-                    data-day="{{ day }}" data-hour="{{ hour }}">
+                <td data-day="{{ day }}" data-hour="{{ hour }}"
+                    class="is-clickable"
+                    style="cursor: pointer;">
                 </td>
               {% endfor %}
             </tr>
@@ -52,50 +54,45 @@
       </table>
     </div>
 
-    <button type="submit" class="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md">
-      Save Group Availability
-    </button>
+  <button type="submit" class="button is-primary mt-4">
+    Save Group Availability
+  </button>
   </form>
 </div>
 
-
 <script>
-  const selected = new Set(JSON.parse('{{ selected_slots|escapejs }}'));
-  const gridCells = document.querySelectorAll('td[data-day]');
-  const form = document.getElementById('availability-form');
+  document.addEventListener("DOMContentLoaded", () => {
+    const selected = new Set(JSON.parse('{{ selected_slots|escapejs }}'));
+    const gridCells = document.querySelectorAll('td[data-day]');
+    const form = document.getElementById('availability-form');
 
-  // Highlight saved cells
-  gridCells.forEach(cell => {
-    const key = `${cell.dataset.day}|${cell.dataset.hour}`;
-    if (selected.has(key)) {
-      cell.classList.add('bg-blue-400', 'text-white');
-    }
-
-    cell.addEventListener('click', () => {
+    gridCells.forEach(cell => {
       const key = `${cell.dataset.day}|${cell.dataset.hour}`;
       if (selected.has(key)) {
-        selected.delete(key);
-        cell.classList.remove('bg-blue-400', 'text-white');
-      } else {
-        selected.add(key);
-        cell.classList.add('bg-blue-400', 'text-white');
+        cell.classList.add('has-background-primary', 'has-text-white');
       }
-    });
-  });
 
-  // On form submit, inject hidden inputs
-  form.addEventListener('submit', () => {
-    document.querySelectorAll('input[name="selected_slots[]"]').forEach(el => el.remove());
-    Array.from(selected).forEach(slot => {
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = 'selected_slots[]';
-      input.value = slot;
-      form.appendChild(input);
+      cell.addEventListener('click', () => {
+        if (selected.has(key)) {
+          selected.delete(key);
+          cell.classList.remove('has-background-primary', 'has-text-white');
+        } else {
+          selected.add(key);
+          cell.classList.add('has-background-primary', 'has-text-white');
+        }
+      });
+    });
+
+    form.addEventListener('submit', () => {
+      document.querySelectorAll('input[name="selected_slots[]"]').forEach(el => el.remove());
+      Array.from(selected).forEach(slot => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'selected_slots[]';
+        input.value = slot;
+        form.appendChild(input);
+      });
     });
   });
 </script>
-
-
-
 {% endblock %}

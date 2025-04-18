@@ -1,15 +1,101 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>StudySync</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <title>{% block title %}StudySyncTeam{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <!-- Bulma CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  
+  <!-- Optional: Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <!-- Custom Styling -->
+  <style>
+    .navbar.is-primary {
+      background-color: #4A90E2;
+    }
+    .hero.is-light {
+      background-color: #f9f9f9;
+    }
+    .card {
+      border-radius: 8px;
+    }
+    .bg {
+      background-color: #f4f8fb;
+      min-height: 100vh;
+    }
+    table td, table th {
+      border: 1px solid #ccc !important;
+    }
+    td[data-day][data-hour] {
+      transition: background-color 0.2s ease;
+    }
+    td[data-day][data-hour].has-background-primary {
+      background-color: #3273dc !important;
+      color: white;
+    }
+  </style>
+
+  {% block extra_head %}{% endblock %}
 </head>
 
-<body class="min-h-screen bg-gray-100 text-gray-800">
-    {% block content %}
-    {% endblock %}
+<body class="bg">
+
+  <!-- Navbar -->
+  <nav class="navbar is-primary" role="navigation" aria-label="main navigation">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="/">
+        <strong>📘 StudySyncTeam</strong>
+      </a>
+    </div>
+
+    <div class="navbar-menu">
+      <div class="navbar-start">
+        {% if user.is_authenticated %}
+          <a class="navbar-item" href="{% url 'dashboard' %}">Dashboard</a>
+          <a class="navbar-item" href="{% url 'solo_availability_grid' %}">Solo</a>
+          <a class="navbar-item" href="{% url 'group_availability_grid' %}">Group</a>
+          <a class="navbar-item" href="{% url 'profile_edit' %}">Profile</a>
+        {% endif %}
+      </div>
+
+      <div class="navbar-end">
+        <div class="navbar-item">
+          {% if user.is_authenticated %}
+            <form method="post" action="{% url 'logout' %}">
+              {% csrf_token %}
+              <button class="button is-light">Logout</button>
+            </form>
+          {% else %}
+            <a class="button is-light" href="{% url 'login' %}">Login</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Notification messages -->
+  {% if messages %}
+    <section class="section pt-3">
+      <div class="container">
+        {% for message in messages %}
+          <div class="notification is-success is-light">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  <!-- Page content -->
+  <section class="section">
+    <div class="container">
+      {% block content %}{% endblock %}
+    </div>
+  </section>
+
+  {% block extra_scripts %}{% endblock %}
 </body>
 </html>

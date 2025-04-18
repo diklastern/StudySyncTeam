@@ -15,17 +15,10 @@ DAYS_OF_WEEK = [
 ]
 
 class CustomUser(AbstractUser):
-    pass
-
-class UserProfile(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     full_name = models.CharField(max_length=100)
-    university = models.CharField(max_length=50, choices=UNIVERSITIES)
-    degree_program = models.CharField(max_length=50, choices=DEGREE_PROGRAMS)
-    year_of_study = models.PositiveSmallIntegerField(choices=STUDY_YEARS)
-
-    def __str__(self):
-        return f"{self.full_name} ({self.get_degree_program_display()})"
+    university = models.CharField(max_length=100, choices=UNIVERSITIES)
+    degree_program = models.CharField(max_length=100, choices=DEGREE_PROGRAMS)
+    year_of_study = models.SmallIntegerField(choices=STUDY_YEARS, default=1)
 
 
 class SoloAvailability(models.Model):

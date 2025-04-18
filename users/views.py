@@ -1,23 +1,38 @@
 from django.shortcuts import render, redirect
-from .forms import UserProfileForm
-from .models import UserProfile
+from .forms import CustomUserCreationForm, CustomUserEditForm
+from .models import CustomUser
 from django.contrib.auth.decorators import login_required
-
+from django.contrib import messages
+from django.contrib.auth import login
 
 @login_required
 def homepage(request):
     return render(request, 'users/home.html')
 
+
+def register(request):
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('dashboard')
+    else:
+        form = CustomUserCreationForm()
+
+    return render(request, 'users/register.html', {'form': form})
+
+
 @login_required
 def edit_profile(request):
-    profile, created = UserProfile.objects.get_or_create(user=request.user)
-
+    user = request.user
     if request.method == 'POST':
-        form = UserProfileForm(request.POST, instance=profile)
+        form = CustomUserEditForm(request.POST, instance=user)
         if form.is_valid():
             form.save()
-            return redirect('profile') 
+            messages.success(request, "Profile updated!")
+            return redirect('dashboard')
     else:
-        form = UserProfileForm(instance=profile)
+        form = CustomUserEditForm(instance=user)
 
     return render(request, 'users/edit_profile.html', {'form': form})
