@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load custom_tags %}
+{% block content %}
+<div class="p-6">
+  <h2 class="text-2xl font-bold mb-4 text-blue-800">Weekly Solo Availability</h2>
+  <form method="post">
+    {% csrf_token %}
+    <input type="date" name="week_start" value="{{ week_start|date:'Y-m-d' }}" class="mb-4 border px-3 py-1 rounded" required>
+    <div class="overflow-auto">
+      <table class="table-auto border-collapse w-full max-w-5xl text-sm text-center">
+        <thead>
+          <tr class="bg-blue-100 text-gray-700">
+            <th class="border px-2 py-1">Hour</th>
+            {% for day in week_days %}
+              <th class="border px-2 py-1 capitalize">{{ day }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for hour in 8|to:22 %}
+          <tr>
+            <td class="border px-2 py-1 font-semibold text-gray-600">{{ hour|format_hour }}</td>
+            {% for day in week_days %}
+              <td class="border px-2 py-1 bg-white hover:bg-blue-50 cursor-pointer"
+                  data-day="{{ day }}" data-hour="{{ hour }}">
+              </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <button type="submit" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">
+      Save Availability
+    </button>
+  </form>
+</div>
+
+<script>
+  const selected = new Set();
+  const gridCells = document.querySelectorAll('td[data-day]');
+  const form = document.querySelector('form');
+
+  gridCells.forEach(cell => {
+    cell.addEventListener('click', () => {
+      const key = `${cell.dataset.day}|${cell.dataset.hour}`;
+
+      if (selected.has(key)) {
+        selected.delete(key);
+        cell.classList.remove('bg-blue-400', 'text-white');
+      } else {
+        selected.add(key);
+        cell.classList.add('bg-blue-400', 'text-white');
+      }
+
+      // Clear previous inputs
+      document.querySelectorAll('input[name="selected_slots[]"]').forEach(el => el.remove());
+
+      // Create one hidden input per slot
+      Array.from(selected).forEach(slot => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'selected_slots[]';
+        input.value = slot;
+        form.appendChild(input);
+      });
+    });
+  });
+</script>
+
+{% endblock %}
