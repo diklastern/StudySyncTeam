@@ -13,6 +13,33 @@
 
   <!-- Custom Styling -->
   <style>
+  .switch input:checked + .check {
+    background-color: #4a90e2;
+    }
+    .check {
+      background: #ddd;
+      border-radius: 20px;
+      display: inline-block;
+      width: 40px;
+      height: 20px;
+      position: relative;
+      transition: background 0.3s;
+    }
+    .check::before {
+      content: "";
+      position: absolute;
+      left: 3px;
+      top: 3px;
+      width: 14px;
+      height: 14px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.3s;
+    }
+    .switch input:checked + .check::before {
+      transform: translateX(20px);
+    }
+
     .navbar.is-primary {
       background-color: #4A90E2;
     }

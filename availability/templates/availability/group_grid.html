@@ -2,9 +2,8 @@
 {% load custom_tags %}
 {% block content %}
 <div class="box">
- <h2 class="title is-4 has-text-link mb-4">Weekly Group Availability</h2>
+  <h2 class="title is-4 has-text-link mb-4">Weekly Group Availability</h2>
 
-  <!-- Week selection (GET) -->
   <form method="get" id="week-form">
     <div class="field is-grouped is-align-items-center">
       <label for="week_start" class="label mr-2">Select Week:</label>
@@ -15,84 +14,263 @@
     </div>
   </form>
 
-  <!-- Save availability (POST) -->
-  <form method="post" id="availability-form" class="mt-4">
-    {% csrf_token %}
-    <input type="hidden" name="week_start" value="{{ week_start|date:'Y-m-d' }}">
+  <div id="csrf-token" data-token="{{ csrf_token }}"></div>
+  <p class="has-text-grey mb-3">
+    Week of <strong>{{ week_start|date:"M d" }}</strong> – 
+    <strong>{{ end_of_week|date:"M d" }}</strong>
+  </p>
 
-    <p class="has-text-grey mb-3">
-      Week of <strong>{{ week_start|date:"M d" }}</strong> – 
-      <strong>{{ end_of_week|date:"M d" }}</strong>
-    </p>
-
-    <div class="table-container">
-      <table class="table is-bordered is-fullwidth is-hoverable has-text-centered">
-        <thead>
+  <div class="table-container">
+    <table class="table is-bordered is-fullwidth is-hoverable has-text-centered">
+      <thead>
+        <tr>
+          <th>Hour</th>
+          {% for day, date in week_day_dates %}
+            <th>
+              {{ date|date:"l" }}<br>
+              <span class="has-text-grey is-size-7">{{ date|date:"d/m" }}</span>
+            </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for hour in 8|to:22 %}
           <tr>
-            <th>Hour</th>
+            <td class="has-text-grey has-text-weight-semibold">{{ hour|format_hour }}</td>
             {% for day, date in week_day_dates %}
-              <th class="capitalize">
-                {{ day }}<br>
-                <span class="has-text-grey is-size-7">{{ date|date:"d/m" }}</span>
-              </th>
+              <td data-day="{{ day }}" data-hour="{{ hour }}"
+                  class="is-clickable slot-cell"
+                  style="cursor: pointer;"></td>
             {% endfor %}
           </tr>
-        </thead>
-        <tbody>
-          {% for hour in 8|to:22 %}
-            <tr>
-              <td class="has-text-grey has-text-weight-semibold">{{ hour|format_hour }}</td>
-              {% for day, date in week_day_dates %}
-                <td data-day="{{ day }}" data-hour="{{ hour }}"
-                    class="is-clickable"
-                    style="cursor: pointer;">
-                </td>
-              {% endfor %}
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-  <button type="submit" class="button is-primary mt-4">
-    Save Group Availability
-  </button>
-  </form>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 
+<!-- Slot Add/Edit Modal -->
+<div class="modal" id="slotModal">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Add Availability Slot</p>
+      <button class="delete" aria-label="close" onclick="closeModal()"></button>
+    </header>
+    <section class="modal-card-body">
+      <div class="field">
+        <label class="label">Day of Week</label>
+        <div class="control">
+          <div class="select is-fullwidth">
+            <select id="modal-day">
+              <option value="sun">Sunday</option>
+              <option value="mon">Monday</option>
+              <option value="tue">Tuesday</option>
+              <option value="wed">Wednesday</option>
+              <option value="thu">Thursday</option>
+              <option value="fri">Friday</option>
+              <option value="sat">Saturday</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="field is-grouped">
+        <div class="control is-expanded">
+          <label class="label">Start Time</label>
+          <div class="select is-fullwidth">
+            <select id="modal-start"></select>
+          </div>
+        </div>
+        <div class="control is-expanded">
+          <label class="label">End Time</label>
+          <div class="select is-fullwidth">
+            <select id="modal-end"></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="field mt-3 is-flex is-justify-content-space-between is-align-items-center">
+        <label class="label mb-0">Repeat Weekly</label>
+        <input id="repeat-weekly" type="checkbox" class="switch is-rounded is-medium">
+      </div>
+    </section>
+    <footer class="modal-card-foot is-justify-content-space-between">
+      <button class="button is-primary" onclick="saveSlot()">Save Slot</button>
+      <button class="button is-light" onclick="closeModal()">Cancel</button>
+    </footer>
+  </div>
+</div>
+
+<!-- Slot Delete Modal -->
+<div class="modal" id="deleteModal">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Remove Repeated Slot</p>
+      <button class="delete" aria-label="close" onclick="closeDeleteModal()"></button>
+    </header>
+    <section class="modal-card-body">
+      <p class="mb-3">This slot is repeated weekly. What would you like to do?</p>
+      <div class="buttons is-centered">
+        <button class="button is-danger" onclick="deleteSlot('all')">Remove All Future</button>
+        <button class="button is-warning" onclick="deleteSlot('one')">Remove This Only</button>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const selected = new Set(JSON.parse('{{ selected_slots|escapejs }}'));
-    const gridCells = document.querySelectorAll('td[data-day]');
-    const form = document.getElementById('availability-form');
+const selected = new Set(JSON.parse('{{ selected_slots|escapejs }}'));
+const repeated = new Set(JSON.parse('{{ repeated_slots|escapejs }}'));
+const gridCells = document.querySelectorAll('td.slot-cell');
+let clickedDay = null;
+let clickedHour = null;
 
-    gridCells.forEach(cell => {
-      const key = `${cell.dataset.day}|${cell.dataset.hour}`;
+function formatHour(h) {
+  return `${h.toString().padStart(2, '0')}:00`;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  gridCells.forEach(cell => {
+    const key = `${cell.dataset.day}|${cell.dataset.hour}`;
+    if (selected.has(key)) {
+      cell.classList.add('has-background-primary', 'has-text-white');
+    }
+
+    cell.addEventListener('click', () => {
+      clickedDay = cell.dataset.day;
+      clickedHour = parseInt(cell.dataset.hour);
+
+      const key = `${clickedDay}|${clickedHour}`;
       if (selected.has(key)) {
-        cell.classList.add('has-background-primary', 'has-text-white');
-      }
-
-      cell.addEventListener('click', () => {
-        if (selected.has(key)) {
-          selected.delete(key);
-          cell.classList.remove('has-background-primary', 'has-text-white');
+        if (repeated.has(key)) {
+          document.getElementById('deleteModal').classList.add('is-active');
         } else {
-          selected.add(key);
-          cell.classList.add('has-background-primary', 'has-text-white');
+          deleteSlot('one');
         }
-      });
-    });
-
-    form.addEventListener('submit', () => {
-      document.querySelectorAll('input[name="selected_slots[]"]').forEach(el => el.remove());
-      Array.from(selected).forEach(slot => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'selected_slots[]';
-        input.value = slot;
-        form.appendChild(input);
-      });
+      } else {
+        openSlotModal(clickedDay, clickedHour);
+      }
     });
   });
+
+  document.getElementById('modal-start').addEventListener('change', () => {
+    const startHour = parseInt(document.getElementById('modal-start').value);
+    const endSelect = document.getElementById('modal-end');
+    endSelect.innerHTML = '';
+    for (let i = startHour + 1; i <= 22; i++) {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.text = formatHour(i);
+      endSelect.appendChild(opt);
+    }
+  });
+});
+
+function openSlotModal(day, hour) {
+  document.getElementById('modal-day').value = day;
+  const startSelect = document.getElementById('modal-start');
+  const endSelect = document.getElementById('modal-end');
+  startSelect.innerHTML = '';
+  endSelect.innerHTML = '';
+
+  for (let i = 8; i <= 21; i++) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.text = formatHour(i);
+    startSelect.appendChild(opt);
+  }
+  for (let i = hour + 1; i <= 22; i++) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.text = formatHour(i);
+    endSelect.appendChild(opt);
+  }
+
+  startSelect.value = hour;
+  endSelect.value = hour + 1;
+  document.getElementById('repeat-weekly').checked = false;
+  document.getElementById('slotModal').classList.add('is-active');
+}
+
+function saveSlot() {
+  const day = document.getElementById('modal-day').value;
+  const start = parseInt(document.getElementById('modal-start').value);
+  const end = parseInt(document.getElementById('modal-end').value);
+  const repeat = document.getElementById('repeat-weekly').checked;
+  const csrf = document.getElementById('csrf-token').dataset.token;
+
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = window.location.href;
+
+  const csrfInput = document.createElement('input');
+  csrfInput.type = 'hidden';
+  csrfInput.name = 'csrfmiddlewaretoken';
+  csrfInput.value = csrf;
+  form.appendChild(csrfInput);
+
+  const weekInput = document.createElement('input');
+  weekInput.type = 'hidden';
+  weekInput.name = 'week_start';
+  weekInput.value = '{{ week_start|date:"Y-m-d" }}';
+  form.appendChild(weekInput);
+
+  const repeatInput = document.createElement('input');
+  repeatInput.type = 'hidden';
+  repeatInput.name = 'repeat_weekly';
+  repeatInput.value = repeat ? 'true' : 'false';
+  form.appendChild(repeatInput);
+
+  for (let hour = start; hour < end; hour++) {
+    const slotInput = document.createElement('input');
+    slotInput.type = 'hidden';
+    slotInput.name = 'selected_slots[]';
+    slotInput.value = `${day}|${hour}`;
+    form.appendChild(slotInput);
+  }
+
+  document.body.appendChild(form);
+  form.submit();
+}
+
+function closeModal() {
+  document.getElementById('slotModal').classList.remove('is-active');
+}
+function closeDeleteModal() {
+  document.getElementById('deleteModal').classList.remove('is-active');
+}
+function deleteSlot(scope) {
+  const day = clickedDay;
+  const hour = clickedHour;
+  const csrf = document.getElementById('csrf-token').dataset.token;
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = window.location.href;
+
+  const csrfInput = document.createElement('input');
+  csrfInput.type = 'hidden';
+  csrfInput.name = 'csrfmiddlewaretoken';
+  csrfInput.value = csrf;
+  form.appendChild(csrfInput);
+
+  const weekInput = document.createElement('input');
+  weekInput.type = 'hidden';
+  weekInput.name = 'week_start';
+  weekInput.value = '{{ week_start|date:"Y-m-d" }}';
+  form.appendChild(weekInput);
+
+  const deleteInput = document.createElement('input');
+  deleteInput.type = 'hidden';
+  deleteInput.name = 'delete_slot';
+  deleteInput.value = `${day}|${hour}|${scope}`;
+  form.appendChild(deleteInput);
+
+  document.body.appendChild(form);
+  form.submit();
+}
 </script>
 {% endblock %}

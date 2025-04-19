@@ -27,6 +27,7 @@ class SoloAvailability(models.Model):
     day = models.CharField(max_length=3, choices=DAYS_OF_WEEK)
     start_time = models.TimeField()
     end_time = models.TimeField()
+    repeated = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('user', 'week_start', 'day', 'start_time')
@@ -41,6 +42,7 @@ class GroupAvailability(models.Model):
     day = models.CharField(max_length=3, choices=DAYS_OF_WEEK)
     start_time = models.TimeField()
     end_time = models.TimeField()
+    repeated = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('user', 'week_start', 'day', 'start_time')
