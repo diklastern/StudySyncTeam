@@ -1,32 +1,61 @@
 {% extends "base.html" %}
+{% load widget_tweaks %}
 {% block title %}Register{% endblock %}
 
 {% block content %}
 <div class="columns is-centered">
-  <div class="column is-half">
-    <div class="box">
-      <h2 class="title is-4 has-text-primary">Create Your Account</h2>
+  <div class="column is-6-tablet is-5-desktop is-4-widescreen">
+    <div class="box has-shadow is-rounded-lg p-6 fade-in">
+      <h1 class="title is-4 has-text-centered has-text-primary mb-5">
+        <i class="fas fa-user-plus mr-2"></i> Create Your Account
+      </h1>
 
-      <form method="post">
+      <form method="post" class="space-y-4">
         {% csrf_token %}
         {% for field in form %}
           <div class="field">
             <label class="label">{{ field.label }}</label>
-            <div class="control">
-              {{ field }}
-            </div>
+
+            {% if field.field.widget.input_type == "select" or field.field.widget|slugify == "select" %}
+              <div class="control has-icons-left is-relative">
+                {{ field|add_class:"input is-rounded custom-select" }}
+                <span class="icon is-small is-left">
+                  <i class="fas fa-user"></i>
+                </span>
+              </div>
+
+            {% else %}
+              <div class="control has-icons-left">
+                {{ field|add_class:"input is-rounded" }}
+                <span class="icon is-small is-left">
+                  {% if "email" in field.name %}
+                    <i class="fas fa-envelope"></i>
+                  {% elif "password" in field.name %}
+                    <i class="fas fa-lock"></i>
+                  {% else %}
+                    <i class="fas fa-user"></i>
+                  {% endif %}
+                </span>
+              </div>
+            {% endif %}
+
             {% if field.errors %}
               <p class="help is-danger">{{ field.errors|join:", " }}</p>
             {% endif %}
           </div>
         {% endfor %}
 
-        <div class="field is-grouped is-grouped-right mt-4">
-          <div class="control">
-            <button type="submit" class="button is-primary">Register</button>
-          </div>
+        <div class="field mt-5">
+          <button type="submit" class="button is-primary is-fullwidth is-rounded has-text-weight-semibold">
+            <i class="fas fa-check-circle mr-2"></i> Register
+          </button>
         </div>
       </form>
+
+      <p class="has-text-centered mt-4 is-size-7 text-muted">
+        Already have an account?
+        <a href="{% url 'login' %}" class="has-text-link">Log in here</a>
+      </p>
     </div>
   </div>
 </div>

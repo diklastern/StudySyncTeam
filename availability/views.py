@@ -51,9 +51,6 @@ def solo_availability_grid(request):
         selected_slots = request.POST.getlist('selected_slots[]')
         repeat_weekly = request.POST.get('repeat_weekly') == 'true'
 
-        # Remove existing for current week
-        SoloAvailability.objects.filter(user=user, week_start=week_start).delete()
-
         clean_slots = set()
         for slot in selected_slots:
             try:
@@ -141,9 +138,6 @@ def group_availability_grid(request):
     if request.method == 'POST' and 'selected_slots[]' in request.POST:
         selected_slots = request.POST.getlist('selected_slots[]')
         repeat_weekly = request.POST.get('repeat_weekly') == 'true'
-
-        # Remove existing for this week
-        GroupAvailability.objects.filter(user=user, week_start=week_start).delete()
 
         clean_slots = set()
         for slot in selected_slots:

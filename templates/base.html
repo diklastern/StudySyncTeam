@@ -1,128 +1,139 @@
+{% load widget_tweaks %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>{% block title %}StudySyncTeam{% endblock %}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <!-- Bulma CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  
-  <!-- Optional: Font Awesome -->
+
+  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-  <!-- Custom Styling -->
-  <style>
-  .switch input:checked + .check {
-    background-color: #4a90e2;
-    }
-    .check {
-      background: #ddd;
-      border-radius: 20px;
-      display: inline-block;
-      width: 40px;
-      height: 20px;
-      position: relative;
-      transition: background 0.3s;
-    }
-    .check::before {
-      content: "";
-      position: absolute;
-      left: 3px;
-      top: 3px;
-      width: 14px;
-      height: 14px;
-      background: white;
-      border-radius: 50%;
-      transition: transform 0.3s;
-    }
-    .switch input:checked + .check::before {
-      transform: translateX(20px);
-    }
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-    .navbar.is-primary {
-      background-color: #4A90E2;
+  {% load static %}
+  <!-- Custom Styling -->
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dark-theme.css' %}">
+  <link rel="stylesheet" href="{% static 'css/animations.css' %}">
+
+  <style>
+    .pageloader {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(255,255,255,0.9);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.4s ease;
     }
-    .hero.is-light {
-      background-color: #f9f9f9;
+    .pageloader::after {
+      content: "";
+      width: 2rem;
+      height: 2rem;
+      border: 4px solid #4a90e2;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
     }
-    .card {
-      border-radius: 8px;
+    .pageloader:not(.is-active) {
+      opacity: 0;
+      pointer-events: none;
     }
-    .bg {
-      background-color: #f4f8fb;
-      min-height: 100vh;
-    }
-    table td, table th {
-      border: 1px solid #ccc !important;
-    }
-    td[data-day][data-hour] {
-      transition: background-color 0.2s ease;
-    }
-    td[data-day][data-hour].has-background-primary {
-      background-color: #3273dc !important;
-      color: white;
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
   </style>
 
   {% block extra_head %}{% endblock %}
 </head>
 
-<body class="bg">
+<body class="has-background-light fade-in">
 
   <!-- Navbar -->
-  <nav class="navbar is-primary" role="navigation" aria-label="main navigation">
-    <div class="navbar-brand">
-      <a class="navbar-item" href="/">
-        <strong>📘 StudySyncTeam</strong>
-      </a>
-    </div>
-
-    <div class="navbar-menu">
-      <div class="navbar-start">
-        {% if user.is_authenticated %}
-          <a class="navbar-item" href="{% url 'dashboard' %}">Dashboard</a>
-          <a class="navbar-item" href="{% url 'solo_availability_grid' %}">Solo</a>
-          <a class="navbar-item" href="{% url 'group_availability_grid' %}">Group</a>
-          <a class="navbar-item" href="{% url 'profile_edit' %}">Profile</a>
-        {% endif %}
+  <nav class="navbar is-transparent has-shadow">
+    <div class="container">
+      <div class="navbar-brand">
+        <a class="navbar-item has-text-weight-semibold is-size-5" href="/">
+          <i class="fas fa-book-reader mr-2 has-text-primary"></i> StudySyncTeam
+        </a>
+        <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarMenu">
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+        </a>
       </div>
 
-      <div class="navbar-end">
-        <div class="navbar-item">
+      <div id="navbarMenu" class="navbar-menu">
+        <div class="navbar-start">
           {% if user.is_authenticated %}
-            <form method="post" action="{% url 'logout' %}">
-              {% csrf_token %}
-              <button class="button is-light">Logout</button>
-            </form>
-          {% else %}
-            <a class="button is-light" href="{% url 'login' %}">Login</a>
+            <a class="navbar-item" href="{% url 'dashboard' %}">Dashboard</a>
+            <a class="navbar-item" href="{% url 'solo_availability_grid' %}">Solo</a>
+            <a class="navbar-item" href="{% url 'group_availability_grid' %}">Group</a>
+            <a class="navbar-item" href="{% url 'profile_edit' %}">Profile</a>
           {% endif %}
+        </div>
+
+        <div class="navbar-end">
+          <div class="navbar-item">
+            <button id="theme-toggle" class="button is-small is-rounded is-light mr-3">
+              <i class="fas fa-adjust"></i>
+            </button>
+            {% if user.is_authenticated %}
+              <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button class="button is-small is-rounded is-primary">Logout</button>
+              </form>
+            {% else %}
+              <a class="button is-small is-rounded is-primary" href="{% url 'login' %}">Login</a>
+            {% endif %}
+          </div>
         </div>
       </div>
     </div>
   </nav>
 
-  <!-- Notification messages -->
+  <!-- Notifications -->
   {% if messages %}
-    <section class="section pt-3">
-      <div class="container">
-        {% for message in messages %}
-          <div class="notification is-success is-light">
-            {{ message }}
-          </div>
-        {% endfor %}
-      </div>
-    </section>
+  <section class="section pt-3">
+    <div class="container">
+      {% for message in messages %}
+        <div class="notification is-info is-light has-text-centered is-rounded slide-up">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  </section>
   {% endif %}
 
-  <!-- Page content -->
-  <section class="section">
+  <!-- Main Content -->
+  <main class="section">
     <div class="container">
       {% block content %}{% endblock %}
     </div>
-  </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer has-background-white has-text-centered">
+    <div class="content">
+      <p class="is-size-7">
+        <strong>StudySyncTeam</strong> &copy; 2025. All rights reserved.
+      </p>
+    </div>
+  </footer>
 
   {% block extra_scripts %}{% endblock %}
+
+  <!-- Scripts -->
+  <script src="{% static 'js/components.js' %}"></script>
+  <script src="{% static 'js/loader.js' %}"></script>
 </body>
 </html>

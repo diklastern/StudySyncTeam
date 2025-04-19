@@ -1,0 +1,252 @@
+/* ============================
+   StudySyncTeam Theme Styles
+   ============================ */
+
+   :root {
+    --primary: #4a90e2;
+    --accent: #6ed2f0;
+    --light-bg: #f8fafc;
+    --hover: #e4f0fb;
+    --font-color: #1e1e1e;
+    --card-bg: #ffffff;
+    --border: #e0e0e0;
+  }
+  
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--light-bg);
+    color: var(--font-color);
+    line-height: 1.6;
+    font-size: 16px;
+  }
+  
+  /* Navbar */
+  .navbar {
+    background-color: #ffffffee;
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .navbar-item, .button {
+    border-radius: 8px;
+    transition: all 0.3s ease-in-out;
+  }
+  
+  .navbar-item:hover, .button:hover {
+    background-color: var(--hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  }
+  
+  /* Buttons */
+  .button {
+    font-weight: 600;
+    padding: 0.6em 1.2em;
+  }
+  
+  .button.is-primary {
+    background-color: var(--primary);
+    border: none;
+    color: #fff;
+  }
+  
+  /* Cards / Boxes */
+  .card, .box {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    transition: box-shadow 0.3s ease;
+    padding: 1.5rem;
+  }
+  
+  .card:hover, .box:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  }
+  
+  /* Inputs & Forms */
+  .input, .textarea, .select select {
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    padding: 0.75em 1em;
+    font-size: 1rem;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    background: #fff;
+  }
+  
+  .input:focus, .textarea:focus, .select select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(74,144,226,0.1);
+    outline: none;
+  }
+  
+  /* Tables */
+  table td, table th {
+    border: 1px solid var(--border) !important;
+    vertical-align: middle;
+    text-align: center;
+  }
+  
+  /* Notifications */
+  .notification {
+    border-radius: 10px;
+    font-size: 0.95rem;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  
+  /* Footer */
+  footer.footer {
+    padding: 1.5rem 1rem;
+    background-color: #ffffff;
+    border-top: 1px solid var(--border);
+  }
+  
+  /* Switches */
+  .switch {
+    display: inline-block;
+    height: 20px;
+    position: relative;
+    width: 40px;
+  }
+  
+  .switch input {
+    display: none;
+  }
+  
+  .switch .check {
+    background-color: #ddd;
+    border-radius: 20px;
+    cursor: pointer;
+    height: 20px;
+    left: 0;
+    position: absolute;
+    top: 0;
+    transition: background-color 0.3s;
+    width: 40px;
+  }
+  
+  .switch .check::before {
+    background-color: white;
+    border-radius: 50%;
+    content: "";
+    height: 16px;
+    left: 2px;
+    position: absolute;
+    top: 2px;
+    transition: transform 0.3s;
+    width: 16px;
+  }
+  
+  .switch input:checked + .check {
+    background-color: var(--primary);
+  }
+  
+  .switch input:checked + .check::before {
+    transform: translateX(20px);
+  }
+  
+  /* Responsive Fixes */
+  @media screen and (max-width: 768px) {
+    .navbar-menu {
+      background: #fff;
+      padding: 1rem;
+      border-radius: 12px;
+    }
+  
+    .card, .box {
+      padding: 1rem;
+    }
+  }
+  
+  /* Utilities */
+  .has-soft-shadow {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+  }
+  
+  .is-rounded-lg {
+    border-radius: 12px !important;
+  }
+  
+  .text-muted {
+    color: #888;
+  }
+  
+  .fw-semibold {
+    font-weight: 600;
+  }
+ /* Fix select appearance */
+.select select {
+  padding-left: 2.5em;           /* מרווח לטובת האייקון */
+  padding-right: 1.5em;
+  height: 2.75em;                /* גובה דומה לשדה input */
+  line-height: 1.25;
+  font-size: 1rem;
+  border-radius: 9999px;
+  appearance: none;              /* חשוב לאחידות בין דפדפנים */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+/* אייקון לשדה select */
+.select-icon-wrapper {
+  position: relative;
+}
+
+.select-icon-wrapper .icon {
+  position: absolute;
+  left: 0.75em;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  color: #999;
+  pointer-events: none;
+}
+
+/* Fully match <select> appearance to input with icon */
+.custom-select {
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  height: 2.75em;
+  padding-left: 2.5em;
+  padding-right: 1em;
+  font-size: 1rem;
+  line-height: 1.5;
+  appearance: none;
+  background-color: #fff;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.custom-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(74,144,226,0.1);
+  outline: none;
+}
+
+.custom-select-icon {
+  position: absolute;
+  left: 0.75em;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  z-index: 3;
+  pointer-events: none;
+}
+select.input.custom-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-left: 2.2em;
+  height: 3.15em;
+  font-size: 1rem;
+  line-height: 1.5;
+  border-radius: 9999px;
+  background-color: #fff;
+  border: 1px solid var(--border);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+select.input.custom-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+  outline: none;
+}
