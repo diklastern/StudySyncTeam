@@ -1,0 +1,63 @@
+/* ============================
+   StudySyncTeam Dark Theme
+   ============================ */
+
+   body.dark-mode {
+    --primary: #4a90e2;
+    --accent: #6ed2f0;
+    --light-bg: #1e1e1e;
+    --card-bg: #2a2a2a;
+    --font-color: #e0e0e0;
+    --border: #3a3a3a;
+    --hover: #303030;
+  
+    background-color: var(--light-bg);
+    color: var(--font-color);
+  }
+  
+  body.dark-mode .navbar,
+  body.dark-mode .footer,
+  body.dark-mode .box,
+  body.dark-mode .card,
+  body.dark-mode .notification,
+  body.dark-mode .table,
+  body.dark-mode .input,
+  body.dark-mode .textarea,
+  body.dark-mode .select select {
+    background-color: var(--card-bg);
+    color: var(--font-color);
+    border-color: var(--border);
+  }
+  
+  body.dark-mode .navbar-item,
+  body.dark-mode .button,
+  body.dark-mode .has-text-black {
+    color: var(--font-color) !important;
+  }
+  
+  body.dark-mode .button.is-light,
+  body.dark-mode .notification.is-light {
+    background-color: var(--border);
+    color: var(--font-color);
+  }
+  
+  body.dark-mode .input:focus,
+  body.dark-mode .textarea:focus,
+  body.dark-mode .select select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(110,210,240,0.1);
+  }
+  
+  body.dark-mode td[data-day][data-hour].has-background-primary {
+    background-color: var(--primary) !important;
+    color: #fff;
+  }
+  
+  body.dark-mode .switch .check {
+    background-color: #444;
+  }
+  
+  body.dark-mode .switch input:checked + .check {
+    background-color: var(--primary);
+  }
+  

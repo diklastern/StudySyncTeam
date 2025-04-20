@@ -1,12 +1,15 @@
-ervices:
+services:
   - type: web
     name: studysync
     env: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn studysync.wsgi:application"
+    buildCommand: |
+      pip install -r requirements.txt
+      python manage.py collectstatic --noinput
+    startCommand: gunicorn studysync.wsgi:application
     envVars:
       - key: DJANGO_SETTINGS_MODULE
-        value: studysync.settings                               
+        value: studysync.settings
       - key: PYTHON_VERSION
         value: 3.11.11
-
+      - key: DJANGO_ALLOW_ASYNC_UNSAFE
+        value: true
