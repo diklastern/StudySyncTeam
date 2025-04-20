@@ -19,6 +19,8 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
 
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'StudySyncTeam <no-reply@studysync.com>'
 
 
 # Quick-start development settings - unsuitable for production

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="p-8">
-    <h1 class="text-3xl font-bold text-blue-800">Hello, {{ request.user.username }} 👋</h1>
+    <h1 class="text-3xl font-bold text-blue-800">Hello, {{ request.user.full_name }} 👋</h1>
     <p class="mt-4 text-gray-600">Welcome to your StudySync dashboard. From here you can:</p>
     <ul class="mt-4 list-disc list-inside text-gray-500 space-y-1">
         <li>✍🏼 Update your profile</li>
