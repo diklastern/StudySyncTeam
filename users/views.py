@@ -1,9 +1,11 @@
 from django.shortcuts import render, redirect
-from .forms import CustomUserCreationForm, CustomUserEditForm
+from .forms import CustomUserCreationForm, CustomUserEditForm,EmailLoginForm
 from .models import CustomUser
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.contrib.auth import login
+from django.contrib.auth import login, logout, authenticate
+from django import forms
+
 
 @login_required
 def homepage(request):
@@ -12,7 +14,7 @@ def homepage(request):
 
 def register(request):
     if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST)
+        form = CustomUserCreationForm(request.POST, request.FILES)
         if form.is_valid():
             user = form.save()
             login(request, user)
@@ -27,7 +29,7 @@ def register(request):
 def edit_profile(request):
     user = request.user
     if request.method == 'POST':
-        form = CustomUserEditForm(request.POST, instance=user)
+        form = CustomUserEditForm(request.POST, request.FILES, instance=user)
         if form.is_valid():
             form.save()
             messages.success(request, "Profile updated!")
@@ -36,3 +38,23 @@ def edit_profile(request):
         form = CustomUserEditForm(instance=user)
 
     return render(request, 'users/edit_profile.html', {'form': form})
+
+
+def login_view(request):
+    form = EmailLoginForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        email = form.cleaned_data['email']
+        password = form.cleaned_data['password']
+        user = authenticate(request, email=email, password=password)
+        if user:
+            login(request, user)
+            return redirect('dashboard')
+        else:
+            form.add_error(None, 'Invalid email or password')
+    return render(request, 'users/login.html', {'form': form})
+
+
+def logout_view(request):
+    logout(request)
+    messages.success(request, "You have been logged out.")
+    return redirect('login')

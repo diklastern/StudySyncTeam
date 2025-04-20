@@ -250,3 +250,57 @@ select.input.custom-select:focus {
   box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
   outline: none;
 }
+.hidden-input {
+  display: none;
+}
+
+.custom-upload-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background-color: var(--primary);
+  color: white;
+  padding: 0.65rem 1.4rem;
+  border-radius: 9999px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+  margin-bottom: 0.5rem;
+}
+
+.custom-upload-button:hover {
+  background-color: #3a77c2;
+}
+
+.preview-wrapper {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+
+
+.preview-avatar {
+  width: 48px !important;
+  height: 48px !important;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  display: block;
+}
+
+
+img.profile-avatar {
+  width: 48px !important;
+  height: 48px !important;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  display: block;
+}
+

@@ -1,33 +1,85 @@
 {% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
 {% block title %}Edit Profile{% endblock %}
 
 {% block content %}
 <div class="columns is-centered">
-  <div class="column is-half">
-    <div class="box">
-      <h2 class="title is-4 has-text-primary">Edit Your Profile</h2>
+  <div class="column is-6-tablet is-5-desktop is-4-widescreen">
+    <div class="box has-shadow is-rounded-lg p-6 fade-in">
+      <h1 class="title is-4 has-text-centered has-text-primary mb-5">
+        <i class="fas fa-user-edit mr-2"></i> Edit Your Profile
+      </h1>
 
-      <form method="post">
+      <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
+
         {% for field in form %}
           <div class="field">
             <label class="label">{{ field.label }}</label>
-            <div class="control">
-              {{ field }}
+
+            {% if field.field.widget.input_type == "select" or field.field.widget|slugify == "select" %}
+              <div class="control has-icons-left is-relative">
+                {{ field|add_class:"input is-rounded custom-select" }}
+                <span class="icon is-small is-left">
+                  <i class="fas fa-user-graduate"></i>
+                </span>
+              </div>
+          {% elif field.field.widget.input_type == "file" %}
+            <div class="field">
+              <label class="label">Profile Photo</label>
+              <input id="image-upload" name="image" type="file" accept="image/*" class="hidden-input">
+              <label for="image-upload" class="custom-upload-button">
+                <i class="fas fa-camera"></i> Upload Image
+              </label>
+              <div id="preview-wrapper" class="preview-wrapper">
+                <img id="preview-image"
+                  src="{% if user.image %}{{ user.image.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}"
+                  alt="Preview" class="preview-avatar" style="display: block; margin-left: auto; margin-right: auto;" width="48" height="48">
+              </div>
             </div>
+
+            {% else %}
+              <div class="control has-icons-left">
+                {{ field|add_class:"input is-rounded" }}
+                <span class="icon is-small is-left">
+                  <i class="fas fa-user"></i>
+                </span>
+              </div>
+            {% endif %}
+
             {% if field.errors %}
               <p class="help is-danger">{{ field.errors|join:", " }}</p>
             {% endif %}
           </div>
         {% endfor %}
 
-        <div class="field is-grouped is-grouped-right mt-4">
-          <div class="control">
-            <button type="submit" class="button is-primary">Save Changes</button>
-          </div>
+        <div class="field mt-5">
+          <button type="submit" class="button is-primary is-fullwidth is-rounded has-text-weight-semibold">
+            <i class="fas fa-save mr-2"></i> Save Changes
+          </button>
         </div>
       </form>
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const fileInput = document.getElementById('image-upload');
+  const previewImage = document.getElementById('preview-image');
+
+  fileInput?.addEventListener('change', function () {
+    const file = this.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = e => previewImage.src = e.target.result;
+      reader.readAsDataURL(file);
+    } else {
+      previewImage.src = "{% static 'img/default-avatar.png' %}";
+    }
+  });
+</script>
+
 {% endblock %}
