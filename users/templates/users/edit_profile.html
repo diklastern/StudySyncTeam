@@ -27,10 +27,10 @@
               </div>
           {% elif field.field.widget.input_type == "file" %}
             <div class="field">
-              <label class="label">Profile Photo</label>
+              <label class="label has-text-centered is-block">Profile Photo</label>
               <input id="image-upload" name="image" type="file" accept="image/*" class="hidden-input">
-              <label for="image-upload" class="custom-upload-button">
-                <i class="fas fa-camera"></i> Upload Image
+              <label for="image-upload" class="custom-upload-button label has-text-centered is-block ">
+                <i class="fas fa-camera "></i> Upload Image
               </label>
               <div id="preview-wrapper" class="preview-wrapper">
                 <img id="preview-image"

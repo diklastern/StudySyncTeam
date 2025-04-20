@@ -4,17 +4,7 @@ from django.conf import settings
 from datetime import date
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.base_user import BaseUserManager
-from .constants import UNIVERSITIES, DEGREE_PROGRAMS, STUDY_YEARS
-
-DAYS_OF_WEEK = [
-    ('sun', 'Sunday'),
-    ('mon', 'Monday'),
-    ('tue', 'Tuesday'),
-    ('wed', 'Wednesday'),
-    ('thu', 'Thursday'),
-    ('fri', 'Friday'),
-    ('sat', 'Saturday'),
-]
+from .constants import UNIVERSITIES, DEGREE_PROGRAMS, STUDY_YEARS, DAYS_OF_WEEK
 
 
 class CustomUserManager(BaseUserManager):
@@ -61,32 +51,3 @@ class CustomUser(AbstractUser):
         return self.email
     
     
-class SoloAvailability(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    week_start = models.DateField(help_text="Sunday of the week")
-    day = models.CharField(max_length=3, choices=DAYS_OF_WEEK)
-    start_time = models.TimeField()
-    end_time = models.TimeField()
-    repeated = models.BooleanField(default=False)
-
-    class Meta:
-        unique_together = ('user', 'week_start', 'day', 'start_time')
-        ordering = ['week_start', 'day', 'start_time']
-
-    def __str__(self):
-        return f"{self.user.username} SOLO {self.week_start} {self.day} {self.start_time}-{self.end_time}"
-
-class GroupAvailability(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    week_start = models.DateField(help_text="Sunday of the week")
-    day = models.CharField(max_length=3, choices=DAYS_OF_WEEK)
-    start_time = models.TimeField()
-    end_time = models.TimeField()
-    repeated = models.BooleanField(default=False)
-
-    class Meta:
-        unique_together = ('user', 'week_start', 'day', 'start_time')
-        ordering = ['week_start', 'day', 'start_time']
-
-    def __str__(self):
-        return f"{self.user.username} GROUP {self.week_start} {self.day} {self.start_time}-{self.end_time}"

@@ -22,6 +22,13 @@ LOGOUT_REDIRECT_URL = 'login'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'StudySyncTeam <no-reply@studysync.com>'
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp-relay.brevo.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'your_brevo_account_email@example.com'
+EMAIL_HOST_PASSWORD = 'your_brevo_smtp_password'
+DEFAULT_FROM_EMAIL = 'StudySync <your_brevo_account_email@example.com>'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/

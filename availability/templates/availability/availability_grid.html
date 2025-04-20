@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% load custom_tags %}
+{% block content %}
+<div class="box">
+  <h2 class="title is-4 has-text-link mb-4">Weekly {{title}} Availability</h2>
+
+  <form method="get" id="week-form">
+    <div class="field is-grouped is-align-items-center">
+      <label for="week_start" class="label mr-2">Select Week:</label>
+      <input type="date" name="week_start" id="week_start"
+             class="input"
+             value="{{ week_start|date:'Y-m-d' }}"
+             onchange="document.getElementById('week-form').submit()" />
+    </div>
+  </form>
+
+  <div id="csrf-token" data-token="{{ csrf_token }}"></div>
+  <p class="has-text-grey mb-3">
+    Week of <strong>{{ week_start|date:"M d" }}</strong> –
+    <strong>{{ end_of_week|date:"M d" }}</strong>
+  </p>
+
+  <div class="table-container">
+    <table class="table is-bordered is-fullwidth is-hoverable has-text-centered">
+      <thead>
+        <tr>
+          <th>Hour</th>
+          {% for day, date in week_day_dates %}
+            <th>
+              {{ date|date:"l" }}<br>
+              <span class="has-text-grey is-size-7">{{ date|date:"d/m" }}</span>
+            </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for hour in 8|to:22 %}
+          <tr>
+            <td class="has-text-grey has-text-weight-semibold">{{ hour|format_hour }}</td>
+            {% for day, date in week_day_dates %}
+              <td data-day="{{ day }}" data-hour="{{ hour }}"
+                  class="is-clickable slot-cell"
+                  style="cursor: pointer;"></td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modals included -->
+{% include 'availability/_modals.html' %}
+{% endblock %}
+
+
+{% block extra_scripts %}
+{{ selected_slots|json_script:"selectedSlotsJson" }}
+{{ repeated_slots|json_script:"repeatedSlotsJson" }}
+
+<script>
+const selected = new Set(JSON.parse(document.getElementById('selectedSlotsJson').textContent));
+const repeated = new Set(JSON.parse(document.getElementById('repeatedSlotsJson').textContent));
+let clickedDay = null;
+let clickedHour = null;
+
+function formatHour(h) {
+  return `${h.toString().padStart(2, '0')}:00`;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll('td.slot-cell').forEach(cell => {
+    const key = `${cell.dataset.day}|${cell.dataset.hour}`;
+    if (selected.has(key)) {
+      cell.classList.add('has-background-primary', 'has-text-white');
+    }
+
+    cell.addEventListener('click', () => {
+      clickedDay = cell.dataset.day;
+      clickedHour = parseInt(cell.dataset.hour);
+      const key = `${clickedDay}|${clickedHour}`;
+
+      if (selected.has(key)) {
+        if (repeated.has(key)) {
+          document.getElementById('deleteModal').classList.add('is-active');
+        } else {
+          deleteSlot('one');
+        }
+      } else {
+        openSlotModal(clickedDay, clickedHour);
+      }
+    });
+  });
+
+  document.getElementById('modal-start').addEventListener('change', () => {
+    const startHour = parseInt(document.getElementById('modal-start').value);
+    const endSelect = document.getElementById('modal-end');
+    endSelect.innerHTML = '';
+    for (let i = startHour + 1; i <= 22; i++) {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.text = formatHour(i);
+      endSelect.appendChild(opt);
+    }
+  });
+});
+
+function openSlotModal(day, hour) {
+  document.getElementById('modal-day').value = day;
+  const startSelect = document.getElementById('modal-start');
+  const endSelect = document.getElementById('modal-end');
+  startSelect.innerHTML = '';
+  endSelect.innerHTML = '';
+
+  for (let i = 8; i <= 21; i++) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.text = formatHour(i);
+    startSelect.appendChild(opt);
+  }
+  for (let i = hour + 1; i <= 22; i++) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.text = formatHour(i);
+    endSelect.appendChild(opt);
+  }
+
+  startSelect.value = hour;
+  endSelect.value = hour + 1;
+  document.getElementById('repeat-weekly').checked = false;
+  document.getElementById('slotModal').classList.add('is-active');
+}
+
+function saveSlot() {
+  const day = document.getElementById('modal-day').value;
+  const start = parseInt(document.getElementById('modal-start').value);
+  const end = parseInt(document.getElementById('modal-end').value);
+  const repeat = document.getElementById('repeat-weekly').checked;
+  const csrf = document.getElementById('csrf-token').dataset.token;
+  const weekStart = "{{ week_start|date:'Y-m-d' }}";
+
+  const data = new FormData();
+  data.append('csrfmiddlewaretoken', csrf);
+  data.append('week_start', weekStart);
+  data.append('repeat_weekly', repeat ? 'true' : 'false');
+
+  for (let hour = start; hour < end; hour++) {
+    data.append('selected_slots[]', `${day}|${hour}`);
+  }
+
+  fetch(window.location.href, {
+    method: 'POST',
+    body: data,
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(res => res.json())
+  .then(json => {
+    if (json.status === 'ok') {
+      for (let hour = start; hour < end; hour++) {
+        const key = `${day}|${hour}`;
+        selected.add(key);
+        if (repeat) repeated.add(key);
+      }
+      document.querySelectorAll('td.slot-cell').forEach(cell => {
+        const key = `${cell.dataset.day}|${cell.dataset.hour}`;
+        if (selected.has(key)) {
+          cell.classList.add('has-background-primary', 'has-text-white');
+        }
+      });
+      closeModal();
+    } else {
+      alert("Save failed.");
+    }
+  })
+  .catch(err => {
+    console.error("Save error:", err);
+    alert("Error saving slot.");
+  });
+}
+
+function deleteSlot(scope) {
+  const day = clickedDay;
+  const hour = clickedHour;
+  const csrf = document.getElementById('csrf-token').dataset.token;
+  const data = new FormData();
+  data.append('csrfmiddlewaretoken', csrf);
+  data.append('week_start', "{{ week_start|date:'Y-m-d' }}");
+  data.append('delete_slot', `${day}|${hour}|${scope}`);
+
+  fetch(window.location.href, {
+    method: 'POST',
+    body: data,
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(res => res.json())
+  .then(json => {
+    if (json.status === 'ok') {
+      const key = `${day}|${hour}`;
+      selected.delete(key);
+      repeated.delete(key);
+      document.querySelectorAll('td.slot-cell').forEach(cell => {
+        if (`${cell.dataset.day}|${cell.dataset.hour}` === key) {
+          cell.classList.remove('has-background-primary', 'has-text-white');
+        }
+      });
+      closeDeleteModal();
+    } else {
+      alert("Delete failed.");
+    }
+  })
+  .catch(err => {
+    console.error("Delete error:", err);
+    alert("Error deleting slot.");
+  });
+}
+
+function closeModal() {
+  document.getElementById('slotModal').classList.remove('is-active');
+}
+function closeDeleteModal() {
+  document.getElementById('deleteModal').classList.remove('is-active');
+}
+</script>
+{% endblock %}

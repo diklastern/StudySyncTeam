@@ -18,7 +18,6 @@ UNIVERSITIES = [
     ("emek_yizrael", "Jezreel Valley College"),
 ]
 
-
 DEGREE_PROGRAMS = [
     ("is", "Information Systems"),
     ("cs", "Computer Science"),
@@ -32,4 +31,13 @@ STUDY_YEARS = [
     (3, "3rd Year"),
     (4, "4th Year"),
     (5, "5th+ Year"),
+]
+DAYS_OF_WEEK = [
+    ('sun', 'Sunday'),
+    ('mon', 'Monday'),
+    ('tue', 'Tuesday'),
+    ('wed', 'Wednesday'),
+    ('thu', 'Thursday'),
+    ('fri', 'Friday'),
+    ('sat', 'Saturday'),
 ]

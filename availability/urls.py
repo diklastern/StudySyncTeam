@@ -1,8 +1,7 @@
 from django.urls import path
-from . import views
+from .views import availability_grid_view
 
 urlpatterns = [
-    path('solo-grid/', views.solo_availability_grid, name='solo_availability_grid'),
-    path('group-grid/', views.group_availability_grid, name='group_availability_grid'),
-    
+    path('solo-grid/', availability_grid_view, {'mode': 'solo'}, name='solo_availability_grid'),
+    path('group-grid/', availability_grid_view, {'mode': 'group'}, name='group_availability_grid'),
 ]

@@ -1,0 +1,73 @@
+<!-- Slot Add/Edit Modal -->
+<div class="modal" id="slotModal">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Add Availability Slot</p>
+      <button class="delete" aria-label="close" onclick="closeModal()"></button>
+    </header>
+    <section class="modal-card-body">
+      <div class="field">
+        <label class="label">Day of Week</label>
+        <div class="control">
+          <div class="select is-fullwidth">
+            <select id="modal-day">
+              <option value="sun">Sunday</option>
+              <option value="mon">Monday</option>
+              <option value="tue">Tuesday</option>
+              <option value="wed">Wednesday</option>
+              <option value="thu">Thursday</option>
+              <option value="fri">Friday</option>
+              <option value="sat">Saturday</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="field is-grouped">
+        <div class="control is-expanded">
+          <label class="label">Start Time</label>
+          <div class="select is-fullwidth">
+            <select id="modal-start"></select>
+          </div>
+        </div>
+        <div class="control is-expanded">
+          <label class="label">End Time</label>
+          <div class="select is-fullwidth">
+            <select id="modal-end"></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="field mt-3 is-flex is-justify-content-space-between is-align-items-center">
+        <label class="label mb-0">Repeat Weekly</label>
+        <label class="switch is-rounded is-medium">
+          <input id="repeat-weekly" type="checkbox">
+          <span class="check"></span>
+        </label>
+      </div>
+    </section>
+    <footer class="modal-card-foot is-justify-content-space-between">
+      <button class="button is-primary" onclick="saveSlot()">Save Slot</button>
+      <button class="button is-light" onclick="closeModal()">Cancel</button>
+    </footer>
+  </div>
+</div>
+
+<!-- Slot Delete Modal -->
+<div class="modal" id="deleteModal">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Remove Repeated Slot</p>
+      <button class="delete" aria-label="close" onclick="closeDeleteModal()"></button>
+    </header>
+    <section class="modal-card-body">
+      <p class="mb-3">This slot is repeated weekly. What would you like to do?</p>
+      <div class="buttons is-centered">
+        <button class="button is-danger" onclick="deleteSlot('all')">Remove All Future</button>
+        <button class="button is-warning" onclick="deleteSlot('one')">Remove This Only</button>
+      </div>
+    </section>
+  </div>
+</div>

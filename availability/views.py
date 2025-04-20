@@ -1,16 +1,18 @@
+from datetime import datetime, timedelta
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from users.models import SoloAvailability, GroupAvailability
-from datetime import datetime, timedelta, time
-import json
+from django.db.models import Q
+from django.http import JsonResponse
+from availability.models import SoloAvailability, GroupAvailability
 
-
-DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
-
+DAYS = ['sun','mon','tue','wed','thu','fri','sat']
 
 @login_required
-def solo_availability_grid(request):
-    week_start_str = request.POST.get('week_start') if request.method == 'POST' else request.GET.get('week_start')
+def availability_grid_view(request, mode='solo'):
+    Model = SoloAvailability if mode == 'solo' else GroupAvailability
+    template_name = 'availability/availability_grid.html'
+
+    week_start_str = request.GET.get('week_start') or request.POST.get('week_start')
     try:
         raw_date = datetime.strptime(week_start_str, "%Y-%m-%d").date()
         week_start = raw_date - timedelta(days=raw_date.weekday() + 1 if raw_date.weekday() != 6 else 0)
@@ -18,169 +20,61 @@ def solo_availability_grid(request):
         today = datetime.today().date()
         week_start = today - timedelta(days=today.weekday() + 1 if today.weekday() != 6 else 0)
 
-    user = request.user
+    week_day_dates = [(d, week_start + timedelta(days=i)) for i, d in enumerate(DAYS)]
+    end_of_week = week_start + timedelta(days=6)
 
-    # --- DELETE SLOT ---
-    if request.method == 'POST' and 'delete_slot' in request.POST:
-        try:
-            day, hour, scope = request.POST['delete_slot'].split('|')
-            hour = int(hour)
-            start_time = datetime.strptime(f"{hour:02d}", "%H").time()
+    selected_slots = set()
+    repeated_slots = set()
+    qs = Model.objects.filter(user=request.user).filter(Q(week_start=week_start) | Q(repeated=True))
+    for slot in qs:
+        start_hour = slot.start_time.hour
+        end_hour = slot.end_time.hour
+        for hour in range(start_hour, end_hour):
+            key = f"{slot.day}|{hour}"
+            selected_slots.add(key)
+            if slot.repeated:
+                repeated_slots.add(key)
 
+    if request.method == 'POST':
+        delete_key = request.POST.get('delete_slot')
+        if delete_key:
+            day, hour, scope = delete_key.split('|')
+            target_time = datetime.strptime(f"{hour}:00", "%H:%M").time()
             if scope == 'one':
-                SoloAvailability.objects.filter(
-                    user=user,
-                    week_start=week_start,
-                    day=day,
-                    start_time=start_time
-                ).delete()
-            elif scope == 'all':
-                SoloAvailability.objects.filter(
-                    user=user,
-                    week_start__gte=week_start,
-                    day=day,
-                    start_time=start_time
-                ).delete()
-        except Exception:
-            pass
+                Model.objects.filter(user=request.user, week_start=week_start, day=day, start_time=target_time).delete()
+            else:
+                Model.objects.filter(user=request.user, day=day, start_time=target_time, repeated=True).delete()
 
-        return redirect(f"{request.path}?week_start={week_start.strftime('%Y-%m-%d')}")
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'ok'})
+            else:
+                return redirect(request.path + f'?week_start={week_start}')
 
-    # --- SAVE SLOT ---
-    if request.method == 'POST' and 'selected_slots[]' in request.POST:
-        selected_slots = request.POST.getlist('selected_slots[]')
-        repeat_weekly = request.POST.get('repeat_weekly') == 'true'
+        repeat_weekly = request.POST.get('repeat_weekly') in ['true', 'on', '1']
+        slots = request.POST.getlist('selected_slots[]')
+        for slot_key in slots:
+            day, hour = slot_key.split('|')
+            start = datetime.strptime(hour + ':00', '%H:%M').time()
+            end = (datetime.strptime(hour, '%H') + timedelta(hours=1)).time()
+            obj, created = Model.objects.get_or_create(
+                user=request.user,
+                week_start=week_start,
+                day=day,
+                start_time=start,
+                defaults={
+                    'end_time': end,
+                    'repeated': repeat_weekly,
+                }
+            )
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'ok'})
+        return redirect(request.path + f'?week_start={week_start}')
 
-        clean_slots = set()
-        for slot in selected_slots:
-            try:
-                day, hour = slot.split('|')
-                if day not in DAYS:
-                    continue
-                hour = int(hour)
-                start = datetime.strptime(f"{hour:02d}", "%H").time()
-                end = (datetime.strptime(f"{hour:02d}", "%H") + timedelta(hours=1)).time()
-                clean_slots.add((day, start, end))
-            except ValueError:
-                continue
-
-        for offset in range(10 if repeat_weekly else 1):
-            week_offset = week_start + timedelta(weeks=offset)
-            for day, start, end in clean_slots:
-                obj, _ = SoloAvailability.objects.get_or_create(
-                    user=user,
-                    week_start=week_offset,
-                    day=day,
-                    start_time=start,
-                    end_time=end
-                )
-                if repeat_weekly:
-                    obj.repeated = True
-                    obj.save()
-
-        return redirect(f"{request.path}?week_start={week_start.strftime('%Y-%m-%d')}")
-
-    # --- LOAD VIEW ---
-    week_day_dates = [(day, week_start + timedelta(days=i)) for i, day in enumerate(DAYS)]
-    saved_slots = SoloAvailability.objects.filter(user=user, week_start=week_start)
-
-    selected_slots = [f"{s.day}|{int(s.start_time.strftime('%H'))}" for s in saved_slots]
-    repeated_slots = [f"{s.day}|{int(s.start_time.strftime('%H'))}" for s in saved_slots if getattr(s, 'repeated', False)]
-
-    return render(request, 'availability/solo_grid.html', {
+    return render(request, template_name, {
         'week_start': week_start,
-        'end_of_week': week_start + timedelta(days=6),
+        'end_of_week': end_of_week,
         'week_day_dates': week_day_dates,
-        'selected_slots': json.dumps(selected_slots),
-        'repeated_slots': json.dumps(repeated_slots),
+        'selected_slots': list(selected_slots),
+        'repeated_slots': list(repeated_slots),
+        'title': 'Solo' if mode == 'solo' else 'Group',
     })
-
-
-
-@login_required
-def group_availability_grid(request):
-    week_start_str = request.POST.get('week_start') if request.method == 'POST' else request.GET.get('week_start')
-    try:
-        raw_date = datetime.strptime(week_start_str, "%Y-%m-%d").date()
-        week_start = raw_date - timedelta(days=raw_date.weekday() + 1 if raw_date.weekday() != 6 else 0)
-    except (TypeError, ValueError):
-        today = datetime.today().date()
-        week_start = today - timedelta(days=today.weekday() + 1 if today.weekday() != 6 else 0)
-
-    user = request.user
-
-    # --- DELETE SLOT ---
-    if request.method == 'POST' and 'delete_slot' in request.POST:
-        try:
-            day, hour, scope = request.POST['delete_slot'].split('|')
-            hour = int(hour)
-            start_time = datetime.strptime(f"{hour:02d}", "%H").time()
-            if scope == 'one':
-                GroupAvailability.objects.filter(
-                    user=user,
-                    week_start=week_start,
-                    day=day,
-                    start_time=start_time
-                ).delete()
-            elif scope == 'all':
-                GroupAvailability.objects.filter(
-                    user=user,
-                    week_start__gte=week_start,
-                    day=day,
-                    start_time=start_time
-                ).delete()
-        except Exception:
-            pass
-
-        return redirect(f"{request.path}?week_start={week_start.strftime('%Y-%m-%d')}")
-
-    # --- SAVE SLOT ---
-    if request.method == 'POST' and 'selected_slots[]' in request.POST:
-        selected_slots = request.POST.getlist('selected_slots[]')
-        repeat_weekly = request.POST.get('repeat_weekly') == 'true'
-
-        clean_slots = set()
-        for slot in selected_slots:
-            try:
-                day, hour = slot.split('|')
-                if day not in DAYS:
-                    continue
-                hour = int(hour)
-                start = datetime.strptime(f"{hour:02d}", "%H").time()
-                end = (datetime.strptime(f"{hour:02d}", "%H") + timedelta(hours=1)).time()
-                clean_slots.add((day, start, end))
-            except ValueError:
-                continue
-
-        for offset in range(10 if repeat_weekly else 1):
-            week_offset = week_start + timedelta(weeks=offset)
-            for day, start, end in clean_slots:
-                obj, _ = GroupAvailability.objects.get_or_create(
-                    user=user,
-                    week_start=week_offset,
-                    day=day,
-                    start_time=start,
-                    end_time=end
-                )
-                if repeat_weekly:
-                    obj.repeated = True 
-                    obj.save()
-
-        return redirect(f"{request.path}?week_start={week_start.strftime('%Y-%m-%d')}")
-
-    # --- GET View: load data for grid ---
-    week_day_dates = [(day, week_start + timedelta(days=i)) for i, day in enumerate(DAYS)]
-    saved_slots = GroupAvailability.objects.filter(user=user, week_start=week_start)
-
-    selected_slots = [f"{s.day}|{int(s.start_time.strftime('%H'))}" for s in saved_slots]
-    repeated_slots = [f"{s.day}|{int(s.start_time.strftime('%H'))}" for s in saved_slots if getattr(s, 'repeated', False)]
-
-    context = {
-        'week_start': week_start,
-        'end_of_week': week_start + timedelta(days=6),
-        'week_day_dates': week_day_dates,
-        'selected_slots': json.dumps(selected_slots),
-        'repeated_slots': json.dumps(repeated_slots), 
-    }
-    return render(request, 'availability/group_grid.html', context)
-
